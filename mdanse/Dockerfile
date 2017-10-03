@@ -5,27 +5,26 @@ LABEL maintainer="pellegrini@ill.fr"
 # Allows to avoid any interactive post-install configuration 
 RUN export DEBIAN_FRONTEND=noninteractive
 
-# mlocate             --> for using updatedb
-# libgl1-mesa-dri     --> install mesa drivers needed by vtk
-# wget                --> for fetching ScientificPython and MMTK
-# git                 --> for cloning MDANSE repo
-# graphviz            --> for building MDANSE doc
-# texlive-base        --> for building MDANSE doc
-# texlive-latex-extra --> for building MDANSE doc
-# dvipng              --> for building MDANSE doc
-# g++                 --> for building the MDANSE extension that used C++ classes
-# libnetcdf-dev       --> for building the scientific_netcdf extension
-# cython              --> for building ScientificPython/MMTK/MDANSE extensions
-# python-dev          --> for building ScientificPython/MMTK/MDANSE extensions
-# python-wxmpl        --> wxPython + matplotlib + wx backend
-# python-netcdf       --> for building MMTK extension
-# python-vtk          --> for visualizing MDANSE trajectories
-# python-sphinx       --> for building MDANSE doc
-# pyro                --> for MDANSE parallelization
+# libcanberra-gtk-module --> remove wx warning
+# wget                   --> for fetching ScientificPython and MMTK
+# git                    --> for cloning MDANSE repo
+# graphviz               --> for building MDANSE doc
+# texlive-base           --> for building MDANSE doc
+# texlive-latex-extra    --> for building MDANSE doc
+# dvipng                 --> for building MDANSE doc
+# g++                    --> for building the MDANSE extension that used C++ classes
+# libnetcdf-dev          --> for building the scientific_netcdf extension
+# cython                 --> for building ScientificPython/MMTK/MDANSE extensions
+# python-dev             --> for building ScientificPython/MMTK/MDANSE extensions
+# python-wxmpl           --> wxPython + matplotlib + wx backend
+# python-netcdf          --> for building MMTK extension
+# python-vtk             --> for visualizing MDANSE trajectories
+# python-sphinx          --> for building MDANSE doc
+# pyro                   --> for MDANSE parallelization
+# kmod                   --> install insmode necessary when installing nvidia drivers
 RUN apt-get update \
  && apt-get install -y --force-yes --no-install-recommends \
-                       mlocate                             \
-                       libgl1-mesa-dri                     \
+                       libcanberra-gtk-module              \	
                        wget                                \
                        git                                 \
                        graphviz                            \
@@ -40,11 +39,22 @@ RUN apt-get update \
                        python-netcdf                       \
                        python-vtk                          \
                        python-sphinx                       \
-                       pyro                                \ 
+                       pyro                                \
+                       kmod                                \
 && apt-get autoclean                                       \
 && apt-get autoremove
+#&& updatedb
 
 WORKDIR /tmp
+
+# Fetch the host machine nvidia driver
+ADD NVIDIA-DRIVER.run NVIDIA-DRIVER.run
+
+# INstall the driver
+RUN sh /tmp/NVIDIA-DRIVER.run -a -N --ui=none --no-kernel-module
+
+# Remove the nvidia driver
+RUN rm /tmp/NVIDIA-DRIVER.run
 
 # Fetch, build and install ScientificPython
 RUN wget --no-check-certificate https://sourcesup.renater.fr/frs/download.php/file/4570/ScientificPython-2.9.4.tar.gz
@@ -80,5 +90,3 @@ RUN python setup.py install
 WORKDIR /tmp
 RUN rm -rf mdanse
 
-# Run the mdanse gui
-#ENTRYPOINT mdanse_gui
